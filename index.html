@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Zolder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Flappy Zolder</h1>
+    <div id="character-select">
+        <label>Choose your character:</label>
+        <div id="character-grid"></div>
+        <button id="start-btn" disabled>Start Game</button>
+    </div>
+    <canvas id="gameCanvas" width="400" height="600" style="display:none;"></canvas>
+    <div id="score"></div>
+    <div id="leaderboard-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <div id="final-score"></div>
+            <div id="highscore-form" style="display:none;">
+                <label>Enter your name: <input type="text" id="player-name" maxlength="12"></label>
+                <button id="save-score-btn">Save Score</button>
+            </div>
+            <h3>Leaderboard</h3>
+            <ol id="leaderboard-list"></ol>
+            <button id="close-leaderboard">Close</button>
+        </div>
+    </div>
+    <script src="flappy.js"></script>
+</body>
+</html>

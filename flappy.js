@@ -222,7 +222,7 @@ function gameLoop() {
 const characterGrid = document.getElementById('character-grid');
 
 const characterList = [
-    'Sam','Sara','PH','AnneSoof','Barend','Carlijn','Daniel','David','Elke','Frans','Vivienne','Jorik','Siebe','Jeroen','Isa','Laure','Sebastiaan','Megan','Leah','Sil','Janne','Hannah','Robin','Lars','Sanne','Klara','Martin','Joel'
+    'Sam','Sara','PH','Assie','Barend','Carlijn','Daniel','David','Elke','Frans','Vief','Jorik','Siebe','Jeroen','Isa','Laure','Sebas','Megan','Leah','Sil','Janne','Hannah','Robin','Lars','Sanne','Klara','Martin','Joel'
 ];
 // 28 visually distinct colors
 const characterColors = [
@@ -243,7 +243,7 @@ function renderCharacterGrid() {
         const div = document.createElement('div');
         div.className = 'character-option';
         div.style.background = characterColors[idx % characterColors.length];
-        div.textContent = name[0];
+        div.textContent = name; // Show full name
         div.title = name;
         div.dataset.character = name;
         div.addEventListener('click', function() {

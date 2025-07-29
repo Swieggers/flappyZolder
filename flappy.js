@@ -19,11 +19,18 @@ let selectedCharacter = 'yellow';
 // Image assets for all characters
 const characterImages = {};
 
+// Preload base pipes
+const basePipeUpImg = new Image();
+basePipeUpImg.src = 'pipes/pipeUp.png';
+const basePipeDownImg = new Image();
+basePipeDownImg.src = 'pipes/pipeDown.png';
+
 function loadCharacterImages(character) {
     if (!character || characterImages[character]) return;
     const birdImg = new Image();
-    const pipeImg = new Image();
     birdImg.src = `character_styles/${character}/bird.png`;
+    // Try to load custom pipe, but don't require it
+    const pipeImg = new Image();
     pipeImg.src = `character_styles/${character}/pipe.png`;
     characterImages[character] = { bird: birdImg, pipe: pipeImg };
 }
@@ -95,8 +102,9 @@ function drawBird() {
 
 function drawPipes() {
     const imgs = characterImages[selectedCharacter];
-    if (imgs && imgs.pipe && imgs.pipe.complete && imgs.pipe.naturalWidth > 0) {
-        pipes.forEach(pipe => {
+    const hasCustomPipe = imgs && imgs.pipe && imgs.pipe.complete && imgs.pipe.naturalWidth > 0;
+    pipes.forEach(pipe => {
+        if (hasCustomPipe) {
             // Top pipe (flipped vertically)
             ctx.save();
             ctx.translate(pipe.x + PIPE_WIDTH / 2, pipe.height / 2);
@@ -105,19 +113,27 @@ function drawPipes() {
             ctx.restore();
             // Bottom pipe
             ctx.drawImage(imgs.pipe, pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.height - PIPE_GAP);
-        });
-    } else {
-        // Fallback: colored rectangles
-        let idx = characterList.indexOf(selectedCharacter);
-        let pipeColor = idx >= 0 ? characterColors[(idx + 7) % characterColors.length] : '#388e3c';
-        ctx.fillStyle = pipeColor;
-        pipes.forEach(pipe => {
+        } else if (basePipeUpImg.complete && basePipeUpImg.naturalWidth > 0 && basePipeDownImg.complete && basePipeDownImg.naturalWidth > 0) {
+            // Use base pipes from pipes folder
+            // Top pipe (pipeDown, flipped vertically)
+            ctx.save();
+            ctx.translate(pipe.x + PIPE_WIDTH / 2, pipe.height / 2);
+            ctx.scale(1, -1);
+            ctx.drawImage(basePipeDownImg, -PIPE_WIDTH / 2, -pipe.height / 2, PIPE_WIDTH, pipe.height);
+            ctx.restore();
+            // Bottom pipe (pipeUp)
+            ctx.drawImage(basePipeUpImg, pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.height - PIPE_GAP);
+        } else {
+            // Fallback: colored rectangles
+            let idx = characterList.indexOf(selectedCharacter);
+            let pipeColor = idx >= 0 ? characterColors[(idx + 7) % characterColors.length] : '#388e3c';
+            ctx.fillStyle = pipeColor;
             // Top pipe
             ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
             // Bottom pipe
             ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.height - PIPE_GAP);
-        });
-    }
+        }
+    });
 }
 
 function draw() {

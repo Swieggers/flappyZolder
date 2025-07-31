@@ -1,5 +1,6 @@
 // Flappy Zolder - Basic Flappy Bird-like Game
 
+document.addEventListener('DOMContentLoaded', function() {
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreDiv = document.getElementById('score');
@@ -15,6 +16,18 @@ const saveScoreBtn = document.getElementById('save-score-btn');
 const closeLeaderboardBtn = document.getElementById('close-leaderboard');
 
 let selectedCharacter = 'yellow';
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAjiedYVFKf9FXed2j5_4yVXWJFTVJXXUU",
+  authDomain: "flappy-d7c3e.firebaseapp.com",
+  databaseURL: "https://flappy-d7c3e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "flappy-d7c3e",
+  storageBucket: "flappy-d7c3e.firebasestorage.app",
+  messagingSenderId: "58565259596",
+  appId: "1:58565259596:web:ebf2f73da95d698d6b5fe9",
+  measurementId: "G-XQBKVQRHYQ"
+};
 
 // Image assets for all characters
 const characterImages = {};
@@ -42,7 +55,7 @@ const FLAP = -8;
 const PIPE_WIDTH = 60;
 const PIPE_GAP = 150;
 const BIRD_SIZE = 40;
-const LEADERBOARD_KEY = 'flappyzolder_leaderboard';
+
 
 // Game state
 
@@ -113,13 +126,13 @@ function drawPipes() {
             ctx.restore();
             // Bottom pipe
             ctx.drawImage(imgs.pipe, pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.height - PIPE_GAP);
-        } else if (basePipeUpImg.complete && basePipeUpImg.naturalWidth > 0 && basePipeDownImg.complete && basePipeDownImg.naturalWidth > 0) {
+        } else if (basePipeUpImg.complete && basePipeUpImg.naturalWidth > 0) {
             // Use base pipes from pipes folder
-            // Top pipe (pipeDown, flipped vertically)
+            // Top pipe (pipeUp, flipped vertically)
             ctx.save();
             ctx.translate(pipe.x + PIPE_WIDTH / 2, pipe.height / 2);
             ctx.scale(1, -1);
-            ctx.drawImage(basePipeDownImg, -PIPE_WIDTH / 2, -pipe.height / 2, PIPE_WIDTH, pipe.height);
+            ctx.drawImage(basePipeUpImg, -PIPE_WIDTH / 2, -pipe.height / 2, PIPE_WIDTH, pipe.height);
             ctx.restore();
             // Bottom pipe (pipeUp)
             ctx.drawImage(basePipeUpImg, pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.height - PIPE_GAP);
@@ -186,21 +199,28 @@ function update() {
 
 
 function showLeaderboard(isHighScore) {
-    // Get leaderboard from localStorage
-    let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
-    // Sort descending
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboardList.innerHTML = '';
-    leaderboard.slice(0, 10).forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        leaderboardList.appendChild(li);
-    });
-    finalScoreDiv.textContent = `Your Score: ${score}`;
-    highscoreForm.style.display = isHighScore ? 'block' : 'none';
-    leaderboardModal.style.display = 'flex';
-    playerNameInput.value = '';
-    playerNameInput.focus();
+    database.ref('leaderboard')
+      .once('value', (snapshot) => {
+         //console.log("Number of children in snapshot:", snapshot.numChildren()); // <<< Add this
+        let leaderboard = [];
+        snapshot.forEach(child => { 
+            //console.log("Processing child with key:", child.key, " and value:", child.val()); // <<< ADD THIS LINE!
+            leaderboard.push(child.val()); });
+        //console.log("Length of leaderboard array before slicing:", leaderboard.length); // <<< Add this
+        leaderboard.sort((a, b) => b.score - a.score);
+        leaderboard = leaderboard.slice(0, 20); // Top 20
+        leaderboardList.innerHTML = '';
+        leaderboard.forEach(entry => {
+            const li = document.createElement('li');
+            li.textContent = `${entry.name} (${entry.character || ''}): ${entry.score}`;
+            leaderboardList.appendChild(li);
+        });
+        finalScoreDiv.textContent = `Your Score: ${score}`;
+        highscoreForm.style.display = isHighScore ? 'block' : 'none';
+        leaderboardModal.style.display = 'flex';
+        playerNameInput.value = '';
+        if (isHighScore) playerNameInput.focus();
+      });
 }
 
 function hideLeaderboard() {
@@ -213,10 +233,19 @@ function hideLeaderboard() {
 
 function saveHighScore() {
     let name = playerNameInput.value.trim() || 'Anonymous';
-    let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
-    leaderboard.push({ name, score });
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
-    showLeaderboard(false);
+    let character = selectedCharacter || '';
+    database.ref('leaderboard').push({
+        name,
+        score,
+        character,
+        created_at: Date.now()
+    }, (error) => {
+        if (error) {
+            alert('Error saving score: ' + error.message);
+        } else {
+            showLeaderboard(false);
+        }
+    });
 }
 
 function gameLoop() {
@@ -224,10 +253,16 @@ function gameLoop() {
     draw();
     scoreDiv.textContent = gameOver ? '' : `Score: ${score}`;
     if (gameOver) {
-        // Check if high score
-        let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
-        let isHighScore = leaderboard.length < 10 || score > Math.min(...leaderboard.map(e => e.score));
-        showLeaderboard(isHighScore && score > 0);
+        // Fetch all leaderboard entries and check if this is a high score
+        database.ref('leaderboard')
+          .once('value', (snapshot) => {
+            let leaderboard = [];
+            snapshot.forEach(child => leaderboard.push(child.val()));
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 20);
+            let isHighScore = leaderboard.length < 20 || score > Math.min(...leaderboard.map(e => e.score));
+            showLeaderboard(isHighScore && score > 0);
+          });
         return;
     }
     requestAnimationFrame(gameLoop);
@@ -243,8 +278,8 @@ const characterList = [
 // 28 visually distinct colors
 const characterColors = [
     '#ffb300','#e53935','#1e88e5','#43a047','#8e24aa','#f4511e','#00acc1','#c0ca33',
-    '#6d4c41','#d81b60','#3949ab','#00897b','#fbc02d','#5e35b1','#039be5','#7cb342',
-    '#f06292','#ffa726','#8d6e63','#00bcd4','#c62828','#9ccc65','#ff7043','#ab47bc',
+    '#6d4c41','#d81b60','#3949ab','#00897b','#fbc02d','#5e35b1', '#f06292', '#039be5',
+    '#7cb342','#ffa726','#8d6e63','#00bcd4','#c62828','#9ccc65','#ff7043','#ab47bc',
     '#26a69a','#ec407a','#bdbdbd','#789262'
 ];
 
@@ -343,4 +378,5 @@ closeLeaderboardBtn.addEventListener('click', function() {
         resetGame();
         gameLoop();
     }
+});
 });

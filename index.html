@@ -28,6 +28,25 @@
             <button id="close-leaderboard">Close</button>
         </div>
     </div>
+
+    <!-- Firebase App (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Realtime Database (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAjiedYVFKf9FXed2j5_4yVXWJFTVJXXUU",
+        authDomain: "flappy-d7c3e.firebaseapp.com",
+        databaseURL: "https://flappy-d7c3e-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "flappy-d7c3e",
+        storageBucket: "flappy-d7c3e.firebasestorage.app",
+        messagingSenderId: "58565259596",
+        appId: "1:58565259596:web:ebf2f73da95d698d6b5fe9",
+        measurementId: "G-XQBKVQRHYQ"
+    };
+    firebase.initializeApp(firebaseConfig);
+    window.database = firebase.database();
+    </script>
     <script src="flappy.js"></script>
 </body>
 </html>

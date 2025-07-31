@@ -69,7 +69,7 @@ let highScore = 0;
 
 
 const PIPE_MIN_HEIGHT = 60; // Minimum height for top and bottom pipe
-const MAX_SCORE = 300;
+const MAX_SCORE = 3000;
 
 // Randomize the center of the gap, then calculate top and bottom pipe heights
 function getRandomPipeHeight() {
@@ -208,7 +208,7 @@ function showLeaderboard(isHighScore) {
             leaderboard.push(child.val()); });
         //console.log("Length of leaderboard array before slicing:", leaderboard.length); // <<< Add this
         leaderboard.sort((a, b) => b.score - a.score);
-        leaderboard = leaderboard.slice(0, 20); // Top 20
+        leaderboard = leaderboard.slice(0, 10); // Top 10
         leaderboardList.innerHTML = '';
         leaderboard.forEach(entry => {
             const li = document.createElement('li');
@@ -259,8 +259,8 @@ function gameLoop() {
             let leaderboard = [];
             snapshot.forEach(child => leaderboard.push(child.val()));
             leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 20);
-            let isHighScore = leaderboard.length < 20 || score > Math.min(...leaderboard.map(e => e.score));
+            leaderboard = leaderboard.slice(0, 10);
+            let isHighScore = leaderboard.length < 10 || score > Math.min(...leaderboard.map(e => e.score));
             showLeaderboard(isHighScore && score > 0);
           });
         return;
